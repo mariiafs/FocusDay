@@ -1,0 +1,57 @@
+
+name: Deploy FocusDay to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  UV_PYTHON: "3.12"
+  FLET_CLI_NO_RICH_OUTPUT: "1"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Build FocusDay
+        shell: bash
+        run: |
+          uv run flet build web --yes --verbose --base-url "${GITHUB_REPOSITORY#*/}" --route-url-strategy hash
+
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: build/web
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Publish website
+        id: deployment
+        uses: actions/deploy-pages@v4
