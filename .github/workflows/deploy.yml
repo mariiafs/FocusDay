@@ -28,10 +28,15 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@v6
 
+      - name: Install Flet CLI
+        run: uv tool install --with flet-cli flet
+
       - name: Build FocusDay
         shell: bash
         run: |
-          uv run flet build web --yes --verbose --base-url "${GITHUB_REPOSITORY#*/}" --route-url-strategy hash
+          flet build web --yes --verbose \
+            --base-url "${GITHUB_REPOSITORY#*/}" \
+            --route-url-strategy hash
 
       - name: Upload website
         uses: actions/upload-pages-artifact@v4
